@@ -1,2 +1,7 @@
 # SignInServer
-Server of the SignIn App
+
+FLASK 1.0.2
+FLASK-JWT 0.3.2
+FLASK-SQLALCHEMY 2.3.2
+
+Try to be RESTful
