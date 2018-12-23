@@ -1,6 +1,5 @@
 from flask import Flask, request
 from flask_sqlalchemy import SQLAlchemy
-from flask_jwt import JWT
 
 db = SQLAlchemy()
 
@@ -18,10 +17,10 @@ def init_app(config_filename):
                 response.headers['Access-Control-Allow-Headers'] = headers
         return response
 
-    from SignIn.User.model import db
+    from SignIn.model import db
     db.init_app(app)
 
-    from SignIn.User.api import init_api
+    from SignIn.api import init_api
     init_api(app)
 
     return app
