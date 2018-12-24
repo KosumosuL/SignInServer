@@ -84,6 +84,12 @@ class Class(db.Model):
     def getall(self):
         return self.query.all()
 
+    def stugetclass(self, stuID):
+        return self.query.filter(Class.classID == JoinTable.classID, JoinTable.stuID == stuID).all()
+
+    def teagetclass(self, jobID):
+        return self.query.filter(Class.classID == TeachTable.classID, TeachTable.jobID == jobID).all()
+
     def add(self, cls):
         db.session.add(cls)
         return session_commit()
@@ -105,21 +111,23 @@ class Class(db.Model):
 
 class JoinTable(db.Model):
     __tablename__ = 'jointable'
+    jid = db.Column(db.INTEGER, primary_key=True, nullable=False)
     classID = db.Column(db.String(20), primary_key=True, nullable=False)
     stuID = db.Column(db.String(20), nullable=False)
 
     def __repr__(self):
-        return '<%r join %r>' % self.stuID, self.classID
+        return '<%r : %r join %r>' % self.jid, self.stuID, self.classID
 
-    def __init__(self, classID, stuID):
+    def __init__(self, jid, classID, stuID):
+        self.jid = jid
         self.classID = classID
         self.stuID = stuID
 
-    def get(self, classID):
-        return self.query.filter_by(classID=classID).first()
+    def get(self, classID, stuID):
+        return self.query.filter(JoinTable.classID == classID, JoinTable.stuID == stuID).first()
 
-    def stugetclass(self, stuID):
-        return self.query(Class).filter(Class.classID == JoinTable.classID, JoinTable.stuID == stuID).all()
+    def getid(self):
+        return len(self.query.all())
 
     def add(self, cls):
         db.session.add(cls)
@@ -129,27 +137,29 @@ class JoinTable(db.Model):
         db.session.update(cls)
         return session_commit()
 
-    def delete(self, classID):
-        self.query.filter_by(classID=classID).delete()
+    def delete(self, classID, stuID):
+        self.query.filter(JoinTable.classID == classID, JoinTable.stuID == stuID).delete()
         return session_commit()
 
 class TeachTable(db.Model):
     __tablename__ = 'teachtable'
-    classID = db.Column(db.String(20), primary_key=True, nullable=False)
+    tid = db.Column(db.INTEGER, primary_key=True, nullable=False)
+    classID = db.Column(db.String(20), nullable=False)
     jobID = db.Column(db.String(20), nullable=False)
 
     def __repr__(self):
-        return '<%r teach %r>' % self.jobID, self.classID
+        return '<%r : %r teach %r>' % self.tid, self.jobID, self.classID
 
-    def __init__(self, classID, jobID):
+    def __init__(self, tid, classID, jobID):
+        self.tid = tid
         self.classID = classID
         self.jobID = jobID
 
-    def get(self, classID):
-        return self.query.filter_by(classID=classID).first()
+    def get(self, classID, jobID):
+        return self.query.filter(TeachTable.classID == classID, TeachTable.jobID == jobID).first()
 
-    def teagetclass(self, jobID):
-        return self.query(Class).filter(Class.classID == TeachTable.classID, TeachTable.jobID == jobID).all()
+    def getid(self):
+        return len(self.query.all())
 
     def add(self, cls):
         db.session.add(cls)
@@ -159,8 +169,8 @@ class TeachTable(db.Model):
         db.session.update(cls)
         return session_commit()
 
-    def delete(self, classID):
-        self.query.filter_by(classID=classID).delete()
+    def delete(self, classID, jobID):
+        self.query.filter(TeachTable.classID == classID, TeachTable.jobID == jobID).delete()
         return session_commit()
 
 

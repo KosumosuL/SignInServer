@@ -238,8 +238,7 @@ def init_api(app):
     def getclass():
         required_keys = ['phonenum',
                          'ident',
-                         'stuID',
-                         'jobID']
+                         'ID']
         validation = validate_data_format(request, required_keys)
         valid_format = validation[0]
         data = validation[1]
@@ -247,16 +246,14 @@ def init_api(app):
         if valid_format:
             phonenum = request.form.get('phonenum')
             ident = request.form.get('ident')
-            stuID = request.form.get('stuID')
-            jobID = request.form.get('jobID')
+            ID = request.form.get('ID')
 
             try:
                 schema(
                     {
                         "phonenum": phonenum,
                         "ident": ident,
-                        "stuID": stuID,
-                        "jobID": jobID
+                        "ID": ID
                     }
                 )
                 conforms_to_schema = True
@@ -272,7 +269,7 @@ def init_api(app):
                 if ident == 'student':
 
                     # connect classtable with jointable
-                    classes = JoinTable.stugetclass(JoinTable, stuID)
+                    classes = Class.stugetclass(Class, ID)
                     res = list()
                     for cls in classes:
                         res.append(Class.out(Class, cls))
@@ -281,7 +278,7 @@ def init_api(app):
                 elif ident == 'teacher':
 
                     # connect classtable with teachtable
-                    classes = TeachTable.teagetclass(TeachTable, jobID)
+                    classes = Class.teagetclass(Class, ID)
                     res = list()
                     for cls in classes:
                         res.append(Class.out(Class, cls))
@@ -300,8 +297,7 @@ def init_api(app):
     def addclass():
         required_keys = ['phonenum',
                          'ident',
-                         'stuID',
-                         'jobID',
+                         'ID',
                          'classID',
                          'classname']
         validation = validate_data_format(request, required_keys)
@@ -311,8 +307,7 @@ def init_api(app):
         if valid_format:
             phonenum = request.form.get('phonenum')
             ident = request.form.get('ident')
-            stuID = request.form.get('stuID')
-            jobID = request.form.get('jobID')
+            ID = request.form.get('ID')
             classID = request.form.get('classID')
             classname = request.form.get('classname')
 
@@ -321,8 +316,7 @@ def init_api(app):
                     {
                         "phonenum": phonenum,
                         "ident": ident,
-                        "stuID": stuID,
-                        "jobID": jobID,
+                        "ID": ID,
                         "classID": classID,
                         "classname": classname
                     }
@@ -340,28 +334,57 @@ def init_api(app):
                 if ident == 'teacher':
 
                     # create class
-                    cls = Class.get(Class, classID)
-                    # decide by one ksy classID, hence only check Class
-                    if ~ safe_str_cmp(cls.classname.encode('utf-8'), classname.encode('utf-8')):
-                        cls = Class(classID=classID,
-                                    classname=classname)
-                        _ = Class.add(Class, cls)
-                        tcls = TeachTable(classID=classID,
-                                          jobID=jobID)
-                        _ = TeachTable.add(TeachTable, tcls)
-                        data['status'] = 200
-                        data['message'] = 'Teacher successfully added!'
-                    else:
+                    # 1. assume teach relation not exist
+                    # 2. if class exist then create relationship
+                    # 3. if class not exist then create both
+                    tcls = TeachTable.get(TeachTable, classID, ID)
+                    if tcls:
                         data['status'] = 400
-                        data['message'] = 'Class exist!'
+                        data['message'] = 'teach relation exist!'
+                    else:
+                        cls = Class.get(Class, classID)
+                        if cls:
+                            tcls = TeachTable(tid=TeachTable.getid(TeachTable)+1,
+                                              classID=classID,
+                                              jobID=ID)
+                            _ = TeachTable.add(TeachTable, tcls)
+                            data['status'] = 200
+                            data['message'] = 'Teacher successfully added!'
+                        else:
+                            cls = Class(classID=classID,
+                                        classname=classname)
+                            _ = Class.add(Class, cls)
+                            tcls = TeachTable(tid=TeachTable.getid(TeachTable)+1,
+                                              classID=classID,
+                                              jobID=ID)
+                            _ = TeachTable.add(TeachTable, tcls)
+                            data['status'] = 200
+                            data['message'] = 'Teacher successfully added!'
+
 
                 elif ident == 'student':
 
-                    jcls = JoinTable(classID=classID,
-                                     stuID=stuID)
-                    _ = JoinTable.add(JoinTable, jcls)
-                    data['status'] = 200
-                    data['message'] = 'Student successfully joined!'
+                    # join class
+                    # 1. assume relation not exist
+                    # 2. if class exist join it
+                    # 2. if class not exist return
+                    jcls = JoinTable.get(JoinTable, classID, ID)
+                    if jcls:
+                        data['status'] = 400
+                        data['message'] = 'join relation exist!'
+                    else:
+                        cls = Class.get(Class, classID)
+                        if cls:
+                            jcls = JoinTable(jid=JoinTable.getid(JoinTable)+1,
+                                             classID=classID,
+                                             stuID=ID)
+                            _ = JoinTable.add(JoinTable, jcls)
+                            data['status'] = 200
+                            data['message'] = 'Student successfully joined!'
+                        else:
+                            data['status'] = 400
+                            data['message'] = 'Class not exist!'
+
                 else:
                     data['message'] = 'illegal identity'
 
