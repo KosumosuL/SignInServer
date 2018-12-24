@@ -105,7 +105,7 @@ class Class(db.Model):
 
 class JoinTable(db.Model):
     __tablename__ = 'jointable'
-    classID = db.Column(db.String(20), nullable=False)
+    classID = db.Column(db.String(20), primary_key=True, nullable=False)
     stuID = db.Column(db.String(20), nullable=False)
 
     def __repr__(self):
@@ -135,7 +135,7 @@ class JoinTable(db.Model):
 
 class TeachTable(db.Model):
     __tablename__ = 'teachtable'
-    classID = db.Column(db.String(20), nullable=False)
+    classID = db.Column(db.String(20), primary_key=True, nullable=False)
     jobID = db.Column(db.String(20), nullable=False)
 
     def __repr__(self):

@@ -19,7 +19,9 @@ def init_api(app):
         "sex": Any(int, lambda x: x == 0 or x == 1),
         "ID": Any(str, lambda s: len(s) == 10),
         "realname": Any(str),
-        "ident": Any(str, lambda s: s == 'student' or s == 'teacher')
+        "ident": Any(str, lambda s: s == 'student' or s == 'teacher'),
+        "classID": Any(str, lambda s: len(s) == 5),
+        "classname": Any(str)
     })
 
 
@@ -32,7 +34,8 @@ def init_api(app):
         print(phonenum)
         print(password)
         # remains to be modified
-        userInfo = User.query.filter_by(phonenum=phonenum).first()
+        # userInfo = User.query.filter_by(phonenum=phonenum).first()
+        userInfo = User.get(User, phonenum)
         if (userInfo is None):
             raise JWTError('Bad credentials',
                            'User not found!',
@@ -48,7 +51,7 @@ def init_api(app):
 
     def identity(payload):
         phonenum = payload['identity']
-        return User.get(phonenum)
+        return User.get(User, phonenum)
 
     jwt = JWT(app, authenticate, identity)
 
@@ -134,7 +137,7 @@ def init_api(app):
                     data['message'] = "A User with that username already exists"
                 else:
                     if ident == 'student':
-                        user = User(phonenum=phonenum,
+                        userInfo = User(phonenum=phonenum,
                                     password=password,
                                     nickname=nickname,
                                     college=college,
@@ -144,11 +147,11 @@ def init_api(app):
                                     srealname=realname,
                                     jobID=None,
                                     trealname=None)
-                        _ = User.add(User, user)
+                        _ = User.add(User, userInfo)
                         data['status'] = 200
                         data['message'] = 'Student successfully registered!'
                     elif ident == 'teacher':
-                        user = User(phonenum=phonenum,
+                        userInfo = User(phonenum=phonenum,
                                     password=password,
                                     nickname=nickname,
                                     college=college,
@@ -158,7 +161,7 @@ def init_api(app):
                                     srealname=None,
                                     jobID=ID,
                                     trealname=realname)
-                        _ = User.add(User, user)
+                        _ = User.add(User, userInfo)
                         data['status'] = 200
                         data['message'] = 'Student successfully registered!'
                     else:
