@@ -4,6 +4,7 @@ DEBUG = True
 PORT = 5000
 HOST = "localhost"
 SECRET_KEY = "signin"
+# CLASS_SIGNIN_STATUS = []
 
 JWT_AUTH_URL_RULE = '/login'
 JWT_AUTH_USERNAME_KEY = 'phonenum'

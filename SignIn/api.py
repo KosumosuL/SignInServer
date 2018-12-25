@@ -4,24 +4,28 @@ from SignIn.model import *
 from werkzeug.security import safe_str_cmp
 from collections import OrderedDict
 from datetime import datetime
-from voluptuous import Schema, Any, MultipleInvalid
+from voluptuous import Schema, Any, MultipleInvalid, And, Length, All, Range
 
 
 def init_api(app):
 
+    CLASS_SIGNIN_STATUS = dict()
+
     # Define Schema
     schema = Schema({
-        "phonenum": Any(int, lambda s: len(s) == 11),
-        "password": Any(str, lambda s: 8 <= len(s) <= 20),
+        "phonenum": All(str, Length(min=11, max=11)),
+        "password": All(str, Length(min=8, max=20)),
         "nickname": Any(str),
         "college": Any(str),
         "major": Any(str),
-        "sex": Any(int, lambda x: x == 0 or x == 1),
-        "ID": Any(str, lambda s: len(s) == 10),
+        "sex": All(str, Length(min=1, max=1)),
+        "ID": All(str, Length(min=10, max=12)),
         "realname": Any(str),
-        "ident": Any(str, lambda s: s == 'student' or s == 'teacher'),
-        "classID": Any(str, lambda s: len(s) == 5),
-        "classname": Any(str)
+        "ident": Any(str),
+        "classID": All(str, Length(min=5, max=7)),
+        "classname": Any(str),
+        "time": Any(str),
+        "location": Any(str)
     })
 
 
@@ -392,75 +396,80 @@ def init_api(app):
         resp.status_code = data['status']
         return resp
 
-# # AFTER ENTERING THE CLASS
-# ################################################################
-#     # about members subUI
-#     # when you login and enter the main UI and select your class
-#     # if you are student or teacher, in members subUI, you will see
-#     # all students who selected this class by getallstudent()
-# ################################################################
-#     # when student or teacher enters class UI, get all students who joined this class
-#     @app.route('/api/getallstudent', methods=['POST'])
-#     @jwt_required()
-#     def getallstudent():
-#         required_keys = ['phonenum',
-#                          'classID',
-#                          'ident']
-#         validation = validate_data_format(request, required_keys)
-#         valid_format = validation[0]
-#         data = validation[1]
-#
-#         if valid_format:
-#             phonenum = request.form.get('phonenum')
-#             classID = request.form.get('classID')
-#             ident = request.form.get('ident')
-#
-#             try:
-#                 schema(
-#                     {
-#                         "phonenum": phonenum,
-#                         "classID": classID,
-#                         "ident": ident
-#                     }
-#                 )
-#                 conforms_to_schema = True
-#             except MultipleInvalid as e:
-#                 conforms_to_schema = False
-#                 if "expected" in e.msg:
-#                     data['message'] = e.path[0] + " is not in the correct format"
-#                 else:
-#                     data['message'] = e.msg + " for " + e.path[0]
-#
-#
-#             if conforms_to_schema:
-#
-#                 # get all users in the specific class
-#                 if ident == 'student':
-#
-#                     data['status'] = 200
-#                     data['message'] = 'Student successfully registered!'
-#                 elif ident == 'teacher':
-#
-#                     data['status'] = 200
-#                     data['message'] = 'Student successfully registered!'
-#                 else:
-#                     data['message'] = 'illegal identity'
-#
-#         resp = jsonify(data)
-#         resp.status_code = data['status']
-#         return resp
-#
+# AFTER ENTERING THE CLASS
+################################################################
+    # about members subUI
+    # when you login and enter the main UI and select your class
+    # if you are student or teacher, in members subUI, you will see
+    # all students who selected this class by getallstudent()
+    # teacher can view students' signin status by getSignIn()
+################################################################
+    # when student or teacher enters class UI, get all students who joined this class
+    @app.route('/api/getallstudent', methods=['POST'])
+    @jwt_required()
+    def getallstudent():
+        required_keys = ['phonenum',
+                         'classID',
+                         'ident']
+        validation = validate_data_format(request, required_keys)
+        valid_format = validation[0]
+        data = validation[1]
+
+        if valid_format:
+            phonenum = request.form.get('phonenum')
+            classID = request.form.get('classID')
+            ident = request.form.get('ident')
+
+            try:
+                schema(
+                    {
+                        "phonenum": phonenum,
+                        "classID": classID,
+                        "ident": ident
+                    }
+                )
+                conforms_to_schema = True
+            except MultipleInvalid as e:
+                conforms_to_schema = False
+                if "expected" in e.msg:
+                    data['message'] = e.path[0] + " is not in the correct format"
+                else:
+                    data['message'] = e.msg + " for " + e.path[0]
+
+
+            if conforms_to_schema:
+
+                # get all users in the specific class
+                users = User.getall(User, classID)
+                res = list()
+                for usr in users:
+                    res.append(User.out(User, usr))
+
+                if ident == 'student':
+
+                    data['status'] = 200
+                    data['message'] = res
+                elif ident == 'teacher':
+
+                    data['status'] = 200
+                    data['message'] = res
+                else:
+                    data['message'] = 'illegal identity'
+
+        resp = jsonify(data)
+        resp.status_code = data['status']
+        return resp
+
+
 # ################################################################
 #     # about message subUI
 #     # when you login and enter the main UI and select your class
 #     # if you are student, in this UI, you can submit your message by addmessage()
-#     # and leaving message by addleavemessage()
 #     # and see teacher's bulletins by getbulletin()
 #     # and replies by getmessage()
 #     # if you are teacher, in this UI, you can submit your bulletin by addbulletin()
 #     # and reply to one student by addmessage()
 #     # and see student's message by getmessage()
-#     # and leavemessage by getleavemessage()
 # ################################################################
 #     # students submit message to teacher
 #     # teachers give replies
@@ -521,65 +530,6 @@ def init_api(app):
 #         resp.status_code = data['status']
 #         return resp
 #
-#     # student submit leave message to teacher
-#     @app.route('/api/addleavemessage', methods=['POST'])
-#     @jwt_required()
-#     def addleavemessage():
-#         required_keys = ['phonenum',
-#                          'classID',
-#                          'ident',
-#                          'content',
-#                          'time',
-#                          'leavetime',
-#                          'returntime']
-#         validation = validate_data_format(request, required_keys)
-#         valid_format = validation[0]
-#         data = validation[1]
-#
-#         if valid_format:
-#             phonenum = request.form.get('phonenum')
-#             classID = request.form.get('classID')
-#             ident = request.form.get('ident')
-#             time = request.form.get('time')
-#             content = request.form.get('content')
-#             leavetime = request.form.get('leavetime')
-#             returntime = request.form.get('returntime')
-#
-#             try:
-#                 schema(
-#                     {
-#                         "phonenum": phonenum,
-#                         "classID": classID,
-#                         "ident": ident,
-#                         "content": content,
-#                         "time": time,
-#                         "leavetime": leavetime,
-#                         "returntime": returntime
-#                     }
-#                 )
-#                 conforms_to_schema = True
-#             except MultipleInvalid as e:
-#                 conforms_to_schema = False
-#                 if "expected" in e.msg:
-#                     data['message'] = e.path[0] + " is not in the correct format"
-#                 else:
-#                     data['message'] = e.msg + " for " + e.path[0]
-#
-#
-#             if conforms_to_schema:
-#
-#                 # student add leave message
-#                 if ident == 'student':
-#
-#                     data['status'] = 200
-#                     data['message'] = 'Student successfully registered!'
-#
-#                 else:
-#                     data['message'] = 'illegal identity'
-#
-#         resp = jsonify(data)
-#         resp.status_code = data['status']
-#         return resp
 #
 #     # teacher add bulletin
 #     @app.route('/api/addbulletin', methods=['POST'])
@@ -789,17 +739,229 @@ def init_api(app):
 #         return resp
 #
 #
-# ################################################################
-#     # about signin subUI
-#     # when you login and enter the main UI and select your class
-#     # if you are student, in this UI, you can
-#     # if you are teacher, in this UI, you can
-# ################################################################
-#
-#
-#
-#
-# ################################################################
+
+
+################################################################
+    # about signin subUI
+    # when you login and enter the main UI and select your class
+    # firstly, teacher start signin by startSignIn(), and inform of all the students
+    # then, students finish signin by startSignIn()
+    # finally, teacher close the signin by closeSignIn(),
+    # and if teacher forgot that, app will automatically request to do this
+    # after signin, teacher will see all signin status by getSignIn()
+    # and students will see his/her signin status by getSignIn()
+################################################################
+    # student or teacher click signin
+    # student finish signining
+    # teacher start signing
+    @app.route('/api/startSignIn', methods=['POST'])
+    @jwt_required()
+    def startSignIn():
+        required_keys = ['phonenum',
+                         'classID',
+                         'ident',
+                         'ID',
+                         'time',
+                         'location']
+        validation = validate_data_format(request, required_keys)
+        valid_format = validation[0]
+        data = validation[1]
+
+        if valid_format:
+            phonenum = request.form.get('phonenum')
+            classID = request.form.get('classID')
+            ident = request.form.get('ident')
+            ID = request.form.get('ID')
+            stime = request.form.get('time')
+            location = request.form.get('location')
+
+            try:
+                schema(
+                    {
+                        "phonenum": phonenum,
+                        "classID": classID,
+                        "ident": ident,
+                        "ID": ID,
+                        "time": stime,
+                        "location": location
+                    }
+                )
+                conforms_to_schema = True
+            except MultipleInvalid as e:
+                conforms_to_schema = False
+                if "expected" in e.msg:
+                    data['message'] = e.path[0] + " is not in the correct format"
+                else:
+                    data['message'] = e.msg + " for " + e.path[0]
+
+            if conforms_to_schema:
+
+                if ident == 'teacher':
+
+                    # teacher starts signing
+                    # 1. assume that this class is not signing
+                    # 2. add info to table
+                    # 3. add info to CLASS_SIGNIN_STATUS
+                    if classID in CLASS_SIGNIN_STATUS:
+                        data['status'] = 400
+                        data['message'] = 'cannot start twice!'
+                    else:
+                        users = User.getall(User, classID)
+                        for usr in users:
+                            attendInfo = Attendtable(
+                                aid=Attendtable.getid(Attendtable)+1,
+                                classID=classID,
+                                stuID=usr.stuID,
+                                time=stime,
+                                result=0
+                            )
+                            _ = Attendtable.add(Attendtable, attendInfo)
+                        CLASS_SIGNIN_STATUS[classID] = location
+                        data['status'] = 200
+                        data['message'] = 'Signin successfully started!'
+
+                elif ident == 'student':
+
+                    # student starts signing
+                    # 1. assume that this class is signing
+                    if classID not in CLASS_SIGNIN_STATUS:
+                        data['status'] = 400
+                        data['message'] = 'class is not signining now!'
+                    else:
+                        tlocation = CLASS_SIGNIN_STATUS[classID]
+                        # trans and cal
+
+                        if True:
+                            Attendtable.update(Attendtable, classID=classID, stuID=ID)
+                            data['status'] = 200
+                            data['message'] = 'Student successfully signined!'
+                        else:
+                            data['status'] = 200
+                            data['message'] = 'signin fail!'
+                else:
+                    data['message'] = 'illegal identity'
+
+        resp = jsonify(data)
+        resp.status_code = data['status']
+        return resp
+
+    # teacher click signin again to close it
+    @app.route('/api/closeSignIn', methods=['POST'])
+    @jwt_required()
+    def closeSignIn():
+        required_keys = ['phonenum',
+                         'classID',
+                         'ident']
+        validation = validate_data_format(request, required_keys)
+        valid_format = validation[0]
+        data = validation[1]
+
+        if valid_format:
+            phonenum = request.form.get('phonenum')
+            classID = request.form.get('classID')
+            ident = request.form.get('ident')
+
+            try:
+                schema(
+                    {
+                        "phonenum": phonenum,
+                        "classID": classID,
+                        "ident": ident
+                    }
+                )
+                conforms_to_schema = True
+            except MultipleInvalid as e:
+                conforms_to_schema = False
+                if "expected" in e.msg:
+                    data['message'] = e.path[0] + " is not in the correct format"
+                else:
+                    data['message'] = e.msg + " for " + e.path[0]
+
+            if conforms_to_schema:
+
+                if ident == 'teacher':
+
+                    if classID not in CLASS_SIGNIN_STATUS:
+                        data['status'] = 400
+                        data['message'] = 'class is not signining!'
+                    else:
+                        del CLASS_SIGNIN_STATUS[classID]
+                        data['message'] = 'Signin successfully closed!'
+
+                else:
+                    data['message'] = 'illegal identity'
+
+        resp = jsonify(data)
+        resp.status_code = data['status']
+        return resp
+
+    @app.route('/api/getSignIn', methods=['POST'])
+    @jwt_required()
+    def getSignIn():
+        required_keys = ['phonenum',
+                         'classID',
+                         'ident',
+                         'ID']
+        validation = validate_data_format(request, required_keys)
+        valid_format = validation[0]
+        data = validation[1]
+
+        if valid_format:
+            phonenum = request.form.get('phonenum')
+            classID = request.form.get('classID')
+            ident = request.form.get('ident')
+            ID = request.form.get('ID')
+
+            try:
+                schema(
+                    {
+                        "phonenum": phonenum,
+                        "classID": classID,
+                        "ident": ident,
+                        "ID": ID
+                    }
+                )
+                conforms_to_schema = True
+            except MultipleInvalid as e:
+                conforms_to_schema = False
+                if "expected" in e.msg:
+                    data['message'] = e.path[0] + " is not in the correct format"
+                else:
+                    data['message'] = e.msg + " for " + e.path[0]
+
+            if conforms_to_schema:
+
+                if ident == 'teacher':
+
+                    # for teacher
+                    # display all students' signin status in classID
+                    atts = Attendtable.getall(Attendtable, classID)
+                    res = list()
+                    for att in atts:
+                        res.append(Attendtable.out(Attendtable, att))
+
+                    data['status'] = 200
+                    data['message'] = res
+
+                elif ident == 'student':
+
+                    # for student
+                    # display his/her signin status in classID
+                    atts = Attendtable.get(Attendtable, classID, ID)
+                    res = list()
+                    for att in atts:
+                        res.append(Attendtable.out(Attendtable, att))
+
+                    data['status'] = 200
+                    data['message'] = res
+                else:
+                    data['message'] = 'illegal identity'
+
+        resp = jsonify(data)
+        resp.status_code = data['status']
+        return resp
+
+################################################################
 
     @jwt_required()
     def protected():

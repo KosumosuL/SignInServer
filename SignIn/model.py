@@ -1,5 +1,6 @@
 from flask import Flask
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy import and_
 from flask_sqlalchemy import SQLAlchemy
 
 from SignIn import db
@@ -39,13 +40,16 @@ class User(db.Model):
     def get(self, phonenum):
         return self.query.filter_by(phonenum=phonenum).first()
 
+    def getall(self, classID):
+        return self.query.filter(and_(JoinTable.classID == classID, JoinTable.stuID == User.stuID)).all()
+
     def add(self, user):
         db.session.add(user)
         return session_commit()
 
-    def update(self, user):
-        db.session.update(user)
-        return session_commit()
+    # def update(self, user):
+    #     db.session.update(user)
+    #     return session_commit()
 
     def delete(self, phonenum):
         self.query.filter_by(phonenum=phonenum).delete()
@@ -85,18 +89,18 @@ class Class(db.Model):
         return self.query.all()
 
     def stugetclass(self, stuID):
-        return self.query.filter(Class.classID == JoinTable.classID, JoinTable.stuID == stuID).all()
+        return self.query.filter(and_(Class.classID == JoinTable.classID, JoinTable.stuID == stuID)).all()
 
     def teagetclass(self, jobID):
-        return self.query.filter(Class.classID == TeachTable.classID, TeachTable.jobID == jobID).all()
+        return self.query.filter(and_(Class.classID == TeachTable.classID, TeachTable.jobID == jobID)).all()
 
     def add(self, cls):
         db.session.add(cls)
         return session_commit()
 
-    def update(self, cls):
-        db.session.update(cls)
-        return session_commit()
+    # def update(self, cls):
+    #     db.session.update(cls)
+    #     return session_commit()
 
     def delete(self, classID):
         self.query.filter_by(classID=classID).delete()
@@ -124,7 +128,7 @@ class JoinTable(db.Model):
         self.stuID = stuID
 
     def get(self, classID, stuID):
-        return self.query.filter(JoinTable.classID == classID, JoinTable.stuID == stuID).first()
+        return self.query.filter(and_(JoinTable.classID == classID, JoinTable.stuID == stuID)).first()
 
     def getid(self):
         return len(self.query.all())
@@ -133,12 +137,12 @@ class JoinTable(db.Model):
         db.session.add(cls)
         return session_commit()
 
-    def update(self, cls):
-        db.session.update(cls)
-        return session_commit()
+    # def update(self, cls):
+    #     db.session.update(cls)
+    #     return session_commit()
 
     def delete(self, classID, stuID):
-        self.query.filter(JoinTable.classID == classID, JoinTable.stuID == stuID).delete()
+        self.query.filter(and_(JoinTable.classID == classID, JoinTable.stuID == stuID)).delete()
         return session_commit()
 
 class TeachTable(db.Model):
@@ -156,7 +160,7 @@ class TeachTable(db.Model):
         self.jobID = jobID
 
     def get(self, classID, jobID):
-        return self.query.filter(TeachTable.classID == classID, TeachTable.jobID == jobID).first()
+        return self.query.filter(and_(TeachTable.classID == classID, TeachTable.jobID == jobID)).first()
 
     def getid(self):
         return len(self.query.all())
@@ -165,14 +169,62 @@ class TeachTable(db.Model):
         db.session.add(cls)
         return session_commit()
 
-    def update(self, cls):
-        db.session.update(cls)
-        return session_commit()
+    # def update(self, cls):
+    #     db.session.update(cls)
+    #     return session_commit()
 
     def delete(self, classID, jobID):
-        self.query.filter(TeachTable.classID == classID, TeachTable.jobID == jobID).delete()
+        self.query.filter(and_(TeachTable.classID == classID, TeachTable.jobID == jobID)).delete()
         return session_commit()
 
+class Attendtable(db.Model):
+    __tablename__ = 'attendtable'
+    aid = db.Column(db.INTEGER, primary_key=True, nullable=False)
+    classID = db.Column(db.String(20), nullable=False)
+    stuID = db.Column(db.String(20), nullable=False)
+    time = db.Column(db.String(20), nullable=False)
+    result = db.Column(db.INTEGER, nullable=True, default=0)
+
+    def __repr__(self):
+        return '<%r : %r signin %r>' % self.aid, self.stuID, self.classID
+
+    def __init__(self, aid, classID, stuID, time, result):
+        self.aid = aid
+        self.classID = classID
+        self.stuID = stuID
+        self.time = time
+        self.result = result
+
+    def getall(self, classID):
+        return self.query.filter_by(classID=classID).all()
+
+    def get(self, classID, stuID):
+        return self.query.filter(and_(Attendtable.classID == classID, Attendtable.stuID == stuID)).all()
+
+    def getid(self):
+        return len(self.query.all())
+
+    def add(self, att):
+        db.session.add(att)
+        return session_commit()
+
+    def update(self, classID, stuID):
+        att = self.query.filter_by(classID=classID, stuID=stuID).last()
+        att.result = 1
+        return session_commit()
+    #
+    # def delete(self, classID, jobID):
+    #     self.query.filter(and_(TeachTable.classID == classID, TeachTable.jobID == jobID)).delete()
+    #     return session_commit()
+
+    def out(self, att):
+        return {
+            'aid': att.aid,
+            'classID': att.classID,
+            'stuID': att.stuID,
+            'time': att.time,
+            'result': att.result
+        }
 
 def session_commit():
     try:
