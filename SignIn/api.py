@@ -33,14 +33,12 @@ def init_api(app):
 
     # for auth
     # @jwt_required() means the route is protected, token is needed
-    # "C:\Users\11096\Desktop\SignInServer\lib\site-packages\flask_jwt\__init__.py"
+    # "SignInServer\lib\site-packages\flask_jwt\__init__.py"
     # the request to auth api must be in application/json
 
     def authenticate(phonenum, password):
         print(phonenum)
         print(password)
-        # remains to be modified
-        # userInfo = User.query.filter_by(phonenum=phonenum).first()
         userInfo = User.get(User, phonenum)
         if (userInfo is None):
             raise JWTError('Bad credentials',
