@@ -68,12 +68,21 @@ def init_api(app):
         identity = str(getattr(identity, 'phonenum'))
         return {'exp': exp, 'iat': iat, 'nbf': nbf, 'identity': identity}
 
-    # @jwt.auth_response_handler
-    # def auth_response_handler(access_token, identity):
-    #     return jsonify({
-    #         'access_token': access_token.decode('utf-8'),
-    #         'user_type': identity['type']
-    #     })
+    @jwt.auth_response_handler
+    def auth_response_handler(access_token, identity):
+        return jsonify({
+            'access_token': access_token.decode('utf-8'),
+            'phonenum': str(getattr(identity, 'phonenum')),
+            'password': str(getattr(identity, 'password')),
+            'nickname': str(getattr(identity, 'nickname')),
+            'college': str(getattr(identity, 'college')),
+            'major': str(getattr(identity, 'major')),
+            'sex': str(getattr(identity, 'sex')),
+            'stuID': str(getattr(identity, 'stuID')),
+            'srealname': str(getattr(identity, 'srealname')),
+            'jobID': str(getattr(identity, 'jobID')),
+            'trealname': str(getattr(identity, 'trealname'))
+        })
 
     @jwt.jwt_error_handler
     def error_response_handler(error):
@@ -461,284 +470,233 @@ def init_api(app):
         return resp
 
 
-# ################################################################
-#     # about message subUI
-#     # when you login and enter the main UI and select your class
-#     # if you are student, in this UI, you can submit your message by addmessage()
-#     # and see teacher's bulletins by getbulletin()
-#     # and replies by getmessage()
-#     # if you are teacher, in this UI, you can submit your bulletin by addbulletin()
-#     # and reply to one student by addmessage()
-#     # and see student's message by getmessage()
-# ################################################################
-#     # students submit message to teacher
-#     # teachers give replies
-#     # use time in app
-#     @app.route('/api/addmessage', methods=['POST'])
-#     @jwt_required()
-#     def addmessage():
-#         required_keys = ['phonenum',
-#                          'classID',
-#                          'ident',
-#                          'content',
-#                          'time']
-#         validation = validate_data_format(request, required_keys)
-#         valid_format = validation[0]
-#         data = validation[1]
-#
-#         if valid_format:
-#             phonenum = request.form.get('phonenum')
-#             classID = request.form.get('classID')
-#             ident = request.form.get('ident')
-#             content = request.form.get('content')
-#             time = request.form.get('time')
-#
-#             try:
-#                 schema(
-#                     {
-#                         "phonenum": phonenum,
-#                         "classID": classID,
-#                         "ident": ident,
-#                         "content": content,
-#                         "time": time
-#                     }
-#                 )
-#                 conforms_to_schema = True
-#             except MultipleInvalid as e:
-#                 conforms_to_schema = False
-#                 if "expected" in e.msg:
-#                     data['message'] = e.path[0] + " is not in the correct format"
-#                 else:
-#                     data['message'] = e.msg + " for " + e.path[0]
-#
-#
-#             if conforms_to_schema:
-#
-#                 # student or teacher add message
-#                 if ident == 'student':
-#
-#                     data['status'] = 200
-#                     data['message'] = 'Student successfully registered!'
-#                 elif ident == 'teacher':
-#
-#                     data['status'] = 200
-#                     data['message'] = 'Student successfully registered!'
-#                 else:
-#                     data['message'] = 'illegal identity'
-#
-#         resp = jsonify(data)
-#         resp.status_code = data['status']
-#         return resp
-#
-#
-#     # teacher add bulletin
-#     @app.route('/api/addbulletin', methods=['POST'])
-#     @jwt_required()
-#     def addbulletin():
-#         required_keys = ['phonenum',
-#                          'classID',
-#                          'ident',
-#                          'content',
-#                          'time']
-#         validation = validate_data_format(request, required_keys)
-#         valid_format = validation[0]
-#         data = validation[1]
-#
-#         if valid_format:
-#             phonenum = request.form.get('phonenum')
-#             classID = request.form.get('classID')
-#             ident = request.form.get('ident')
-#             content = request.form.get('content')
-#             time = request.form.get('time')
-#
-#             try:
-#                 schema(
-#                     {
-#                         "phonenum": phonenum,
-#                         "classID": classID,
-#                         "ident": ident,
-#                         "content": content,
-#                         "time": time
-#                     }
-#                 )
-#                 conforms_to_schema = True
-#             except MultipleInvalid as e:
-#                 conforms_to_schema = False
-#                 if "expected" in e.msg:
-#                     data['message'] = e.path[0] + " is not in the correct format"
-#                 else:
-#                     data['message'] = e.msg + " for " + e.path[0]
-#
-#
-#             if conforms_to_schema:
-#
-#                 # teacher add bulletin
-#                 if ident == 'teacher':
-#
-#                     data['status'] = 200
-#                     data['message'] = 'Student successfully registered!'
-#                 else:
-#                     data['message'] = 'illegal identity'
-#
-#         resp = jsonify(data)
-#         resp.status_code = data['status']
-#         return resp
-#
-#     # get all message(s2t & t2s)
-#     @app.route('/api/getmessage', methods=['POST'])
-#     @jwt_required()
-#     def getmessage():
-#         required_keys = ['phonenum',
-#                          'classID',
-#                          'ident']
-#         validation = validate_data_format(request, required_keys)
-#         valid_format = validation[0]
-#         data = validation[1]
-#
-#         if valid_format:
-#             phonenum = request.form.get('phonenum')
-#             classID = request.form.get('classID')
-#             ident = request.form.get('ident')
-#
-#             try:
-#                 schema(
-#                     {
-#                         "phonenum": phonenum,
-#                         "classID": classID,
-#                         "ident": ident
-#                     }
-#                 )
-#                 conforms_to_schema = True
-#             except MultipleInvalid as e:
-#                 conforms_to_schema = False
-#                 if "expected" in e.msg:
-#                     data['message'] = e.path[0] + " is not in the correct format"
-#                 else:
-#                     data['message'] = e.msg + " for " + e.path[0]
-#
-#
-#             if conforms_to_schema:
-#
-#                 #get all messages here
-#
-#                 if ident == 'student':
-#
-#                     data['status'] = 200
-#                     data['message'] = 'Student successfully registered!'
-#                 elif ident == 'teacher':
-#
-#                     data['status'] = 200
-#                     data['message'] = 'Student successfully registered!'
-#                 else:
-#                     data['message'] = 'illegal identity'
-#
-#         resp = jsonify(data)
-#         resp.status_code = data['status']
-#         return resp
-#
-#     # get all leavemessage
-#     @app.route('/api/getmessage', methods=['POST'])
-#     @jwt_required()
-#     def getmessage():
-#         required_keys = ['phonenum',
-#                          'classID',
-#                          'ident']
-#         validation = validate_data_format(request, required_keys)
-#         valid_format = validation[0]
-#         data = validation[1]
-#
-#         if valid_format:
-#             phonenum = request.form.get('phonenum')
-#             classID = request.form.get('classID')
-#             ident = request.form.get('ident')
-#
-#             try:
-#                 schema(
-#                     {
-#                         "phonenum": phonenum,
-#                         "classID": classID,
-#                         "ident": ident
-#                     }
-#                 )
-#                 conforms_to_schema = True
-#             except MultipleInvalid as e:
-#                 conforms_to_schema = False
-#                 if "expected" in e.msg:
-#                     data['message'] = e.path[0] + " is not in the correct format"
-#                 else:
-#                     data['message'] = e.msg + " for " + e.path[0]
-#
-#             if conforms_to_schema:
-#
-#                 # get all leavemessages here
-#
-#                 if ident == 'student':
-#
-#                     data['status'] = 200
-#                     data['message'] = 'Student successfully registered!'
-#                 elif ident == 'teacher':
-#
-#                     data['status'] = 200
-#                     data['message'] = 'Student successfully registered!'
-#                 else:
-#                     data['message'] = 'illegal identity'
-#
-#         resp = jsonify(data)
-#         resp.status_code = data['status']
-#         return resp
-#
-#     # get all bulletin
-#     @app.route('/api/getmessage', methods=['POST'])
-#     @jwt_required()
-#     def getmessage():
-#         required_keys = ['phonenum',
-#                          'classID',
-#                          'ident']
-#         validation = validate_data_format(request, required_keys)
-#         valid_format = validation[0]
-#         data = validation[1]
-#
-#         if valid_format:
-#             phonenum = request.form.get('phonenum')
-#             classID = request.form.get('classID')
-#             ident = request.form.get('ident')
-#
-#             try:
-#                 schema(
-#                     {
-#                         "phonenum": phonenum,
-#                         "classID": classID,
-#                         "ident": ident
-#                     }
-#                 )
-#                 conforms_to_schema = True
-#             except MultipleInvalid as e:
-#                 conforms_to_schema = False
-#                 if "expected" in e.msg:
-#                     data['message'] = e.path[0] + " is not in the correct format"
-#                 else:
-#                     data['message'] = e.msg + " for " + e.path[0]
-#
-#             if conforms_to_schema:
-#
-#                 # get all bulletins here
-#
-#                 if ident == 'student':
-#
-#                     data['status'] = 200
-#                     data['message'] = 'Student successfully registered!'
-#                 elif ident == 'teacher':
-#
-#                     data['status'] = 200
-#                     data['message'] = 'Student successfully registered!'
-#                 else:
-#                     data['message'] = 'illegal identity'
-#
-#         resp = jsonify(data)
-#         resp.status_code = data['status']
-#         return resp
-#
-#
+################################################################
+    # about message subUI
+    # when you login and enter the main UI and select your class
+    # if you are student, in this UI, you can submit your message by addmessage()
+    # and see teacher's bulletins by getbulletin()
+    # and replies by getmessage()
+    # if you are teacher, in this UI, you can submit your bulletin by addbulletin()
+    # and reply to one student by addmessage()
+    # and see student's message by getmessage()
+################################################################
+    # students submit message to teacher
+    # teachers give replies
+    # use time in app
+    @app.route('/api/addmessage', methods=['POST'])
+    @jwt_required()
+    def addmessage():
+        required_keys = ['phonenum',
+                         'classID',
+                         'ident',
+                         'content',
+                         'time']
+        validation = validate_data_format(request, required_keys)
+        valid_format = validation[0]
+        data = validation[1]
+
+        if valid_format:
+            phonenum = request.form.get('phonenum')
+            classID = request.form.get('classID')
+            ident = request.form.get('ident')
+            content = request.form.get('content')
+            time = request.form.get('time')
+
+            try:
+                schema(
+                    {
+                        "phonenum": phonenum,
+                        "classID": classID,
+                        "ident": ident,
+                        "content": content,
+                        "time": time
+                    }
+                )
+                conforms_to_schema = True
+            except MultipleInvalid as e:
+                conforms_to_schema = False
+                if "expected" in e.msg:
+                    data['message'] = e.path[0] + " is not in the correct format"
+                else:
+                    data['message'] = e.msg + " for " + e.path[0]
+
+
+            if conforms_to_schema:
+
+                # student or teacher add message
+                if ident == 'student':
+
+                    data['status'] = 200
+                    data['message'] = 'Student successfully registered!'
+                elif ident == 'teacher':
+
+                    data['status'] = 200
+                    data['message'] = 'Student successfully registered!'
+                else:
+                    data['message'] = 'illegal identity'
+
+        resp = jsonify(data)
+        resp.status_code = data['status']
+        return resp
+
+
+    # teacher add bulletin
+    @app.route('/api/addbulletin', methods=['POST'])
+    @jwt_required()
+    def addbulletin():
+        required_keys = ['phonenum',
+                         'classID',
+                         'ident',
+                         'content',
+                         'time']
+        validation = validate_data_format(request, required_keys)
+        valid_format = validation[0]
+        data = validation[1]
+
+        if valid_format:
+            phonenum = request.form.get('phonenum')
+            classID = request.form.get('classID')
+            ident = request.form.get('ident')
+            content = request.form.get('content')
+            time = request.form.get('time')
+
+            try:
+                schema(
+                    {
+                        "phonenum": phonenum,
+                        "classID": classID,
+                        "ident": ident,
+                        "content": content,
+                        "time": time
+                    }
+                )
+                conforms_to_schema = True
+            except MultipleInvalid as e:
+                conforms_to_schema = False
+                if "expected" in e.msg:
+                    data['message'] = e.path[0] + " is not in the correct format"
+                else:
+                    data['message'] = e.msg + " for " + e.path[0]
+
+
+            if conforms_to_schema:
+
+                # teacher add bulletin
+                if ident == 'teacher':
+
+                    data['status'] = 200
+                    data['message'] = 'Student successfully registered!'
+                else:
+                    data['message'] = 'illegal identity'
+
+        resp = jsonify(data)
+        resp.status_code = data['status']
+        return resp
+
+    # get all message(s2t & t2s)
+    @app.route('/api/getmessage', methods=['POST'])
+    @jwt_required()
+    def getmessage():
+        required_keys = ['phonenum',
+                         'classID',
+                         'ident']
+        validation = validate_data_format(request, required_keys)
+        valid_format = validation[0]
+        data = validation[1]
+
+        if valid_format:
+            phonenum = request.form.get('phonenum')
+            classID = request.form.get('classID')
+            ident = request.form.get('ident')
+
+            try:
+                schema(
+                    {
+                        "phonenum": phonenum,
+                        "classID": classID,
+                        "ident": ident
+                    }
+                )
+                conforms_to_schema = True
+            except MultipleInvalid as e:
+                conforms_to_schema = False
+                if "expected" in e.msg:
+                    data['message'] = e.path[0] + " is not in the correct format"
+                else:
+                    data['message'] = e.msg + " for " + e.path[0]
+
+
+            if conforms_to_schema:
+
+                #get all messages here
+
+                if ident == 'student':
+
+                    data['status'] = 200
+                    data['message'] = 'Student successfully registered!'
+                elif ident == 'teacher':
+
+                    data['status'] = 200
+                    data['message'] = 'Student successfully registered!'
+                else:
+                    data['message'] = 'illegal identity'
+
+        resp = jsonify(data)
+        resp.status_code = data['status']
+        return resp
+
+    # get all bulletin
+    @app.route('/api/getbulletin', methods=['POST'])
+    @jwt_required()
+    def getbulletin():
+        required_keys = ['phonenum',
+                         'classID',
+                         'ident']
+        validation = validate_data_format(request, required_keys)
+        valid_format = validation[0]
+        data = validation[1]
+
+        if valid_format:
+            phonenum = request.form.get('phonenum')
+            classID = request.form.get('classID')
+            ident = request.form.get('ident')
+
+            try:
+                schema(
+                    {
+                        "phonenum": phonenum,
+                        "classID": classID,
+                        "ident": ident
+                    }
+                )
+                conforms_to_schema = True
+            except MultipleInvalid as e:
+                conforms_to_schema = False
+                if "expected" in e.msg:
+                    data['message'] = e.path[0] + " is not in the correct format"
+                else:
+                    data['message'] = e.msg + " for " + e.path[0]
+
+            if conforms_to_schema:
+
+                # get all bulletins here
+
+                if ident == 'student':
+
+                    data['status'] = 200
+                    data['message'] = 'Student successfully registered!'
+                elif ident == 'teacher':
+
+                    data['status'] = 200
+                    data['message'] = 'Student successfully registered!'
+                else:
+                    data['message'] = 'illegal identity'
+
+        resp = jsonify(data)
+        resp.status_code = data['status']
+        return resp
+
+
 
 
 ################################################################
