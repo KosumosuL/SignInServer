@@ -25,7 +25,9 @@ def init_api(app):
         "classID": All(str, Length(min=5, max=7)),
         "classname": Any(str),
         "time": Any(str),
-        "location": Any(str)
+        "content": Any(str),
+        "location": Any(str),
+        "isleave": All(str, Length(min=1, max=1))
     })
 
 
@@ -489,8 +491,10 @@ def init_api(app):
         required_keys = ['phonenum',
                          'classID',
                          'ident',
+                         'ID',
                          'content',
-                         'time']
+                         'time',
+                         'isleave']
         validation = validate_data_format(request, required_keys)
         valid_format = validation[0]
         data = validation[1]
@@ -499,8 +503,10 @@ def init_api(app):
             phonenum = request.form.get('phonenum')
             classID = request.form.get('classID')
             ident = request.form.get('ident')
+            stuID = request.form.get('ID')
             content = request.form.get('content')
             time = request.form.get('time')
+            isleave = request.form.get('isleave')
 
             try:
                 schema(
@@ -508,8 +514,10 @@ def init_api(app):
                         "phonenum": phonenum,
                         "classID": classID,
                         "ident": ident,
+                        "ID": stuID,
                         "content": content,
-                        "time": time
+                        "time": time,
+                        "isleave": isleave
                     }
                 )
                 conforms_to_schema = True
@@ -524,21 +532,30 @@ def init_api(app):
             if conforms_to_schema:
 
                 # student or teacher add message
+                mess = Message(mid=Message.getid(Message) + 1,
+                               classID=classID,
+                               stuID=stuID,
+                               time=time,
+                               content=content,
+                               sender=ident,
+                               isleave=isleave)
+
                 if ident == 'student':
 
+                    _ = Message.add(Message, mess)
                     data['status'] = 200
-                    data['message'] = 'Student successfully registered!'
+                    data['message'] = 'Students message successfully added!'
                 elif ident == 'teacher':
 
+                    _ = Message.add(Message, mess)
                     data['status'] = 200
-                    data['message'] = 'Student successfully registered!'
+                    data['message'] = 'teachers message successfully registered!'
                 else:
                     data['message'] = 'illegal identity'
 
         resp = jsonify(data)
         resp.status_code = data['status']
         return resp
-
 
     # teacher add bulletin
     @app.route('/api/addbulletin', methods=['POST'])
@@ -584,8 +601,13 @@ def init_api(app):
                 # teacher add bulletin
                 if ident == 'teacher':
 
+                    bull = Bulletin(bid=Bulletin.getid(Bulletin) + 1,
+                                    classID=classID,
+                                    time=time,
+                                    content=content)
+                    _ = Bulletin.add(Bulletin, bull)
                     data['status'] = 200
-                    data['message'] = 'Student successfully registered!'
+                    data['message'] = 'Teacher successfully broadcast!'
                 else:
                     data['message'] = 'illegal identity'
 
@@ -599,6 +621,7 @@ def init_api(app):
     def getmessage():
         required_keys = ['phonenum',
                          'classID',
+                         'ID',
                          'ident']
         validation = validate_data_format(request, required_keys)
         valid_format = validation[0]
@@ -607,6 +630,7 @@ def init_api(app):
         if valid_format:
             phonenum = request.form.get('phonenum')
             classID = request.form.get('classID')
+            stuID = request.form.get('ID')
             ident = request.form.get('ident')
 
             try:
@@ -614,6 +638,7 @@ def init_api(app):
                     {
                         "phonenum": phonenum,
                         "classID": classID,
+                        "ID": stuID,
                         "ident": ident
                     }
                 )
@@ -632,12 +657,22 @@ def init_api(app):
 
                 if ident == 'student':
 
-                    data['status'] = 200
-                    data['message'] = 'Student successfully registered!'
-                elif ident == 'teacher':
+                    messes = Message.get(Message, classID, stuID)
+                    res = list()
+                    for mess in messes:
+                        res.append(Message.out(Message, mess))
 
                     data['status'] = 200
-                    data['message'] = 'Student successfully registered!'
+                    data['message'] = res
+                elif ident == 'teacher':
+
+                    messes = Message.getall(Message, classID)
+                    res = list()
+                    for mess in messes:
+                        res.append(Message.out(Message, mess))
+
+                    data['status'] = 200
+                    data['message'] = res
                 else:
                     data['message'] = 'illegal identity'
 
@@ -680,23 +715,25 @@ def init_api(app):
             if conforms_to_schema:
 
                 # get all bulletins here
+                bulls = Bulletin.getall(Bulletin, classID)
+                res = list()
+                for bull in bulls:
+                    res.append(Bulletin.out(Bulletin, bull))
 
                 if ident == 'student':
 
                     data['status'] = 200
-                    data['message'] = 'Student successfully registered!'
+                    data['message'] = res
                 elif ident == 'teacher':
 
                     data['status'] = 200
-                    data['message'] = 'Student successfully registered!'
+                    data['message'] = res
                 else:
                     data['message'] = 'illegal identity'
 
         resp = jsonify(data)
         resp.status_code = data['status']
         return resp
-
-
 
 
 ################################################################

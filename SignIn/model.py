@@ -208,15 +208,6 @@ class Attendtable(db.Model):
         db.session.add(att)
         return session_commit()
 
-    def update(self, classID, stuID):
-        att = self.query.filter_by(classID=classID, stuID=stuID).last()
-        att.result = 1
-        return session_commit()
-    #
-    # def delete(self, classID, jobID):
-    #     self.query.filter(and_(TeachTable.classID == classID, TeachTable.jobID == jobID)).delete()
-    #     return session_commit()
-
     def out(self, att):
         return {
             'aid': att.aid,
@@ -224,6 +215,86 @@ class Attendtable(db.Model):
             'stuID': att.stuID,
             'time': att.time,
             'result': att.result
+        }
+
+class Message(db.Model):
+    __tablename__ = 'message'
+    mid = db.Column(db.INTEGER, primary_key=True, nullable=False)
+    classID = db.Column(db.String(20), nullable=False)
+    stuID = db.Column(db.String(20), nullable=False)
+    time = db.Column(db.String(20), nullable=False)
+    content = db.Column(db.String(200), nullable=False)
+    sender = db.Column(db.INTEGER, nullable=False)
+    isleave = db.Column(db.INTEGER, nullable=False, default=0)
+
+    def __repr__(self):
+        return '<%r : %r message %r>' % self.mid, self.stuID, self.classID
+
+    def __init__(self, mid, classID, stuID, time, content, sender, isleave):
+        self.mid = mid
+        self.classID = classID
+        self.stuID = stuID
+        self.time = time
+        self.content = content
+        self.sender = sender
+        self.isleave = isleave
+
+    def getall(self, classID):
+        return self.query.filter_by(classID=classID).all()
+
+    def get(self, classID, stuID):
+        return self.query.filter(and_(Message.classID == classID, Message.stuID == stuID)).all()
+
+    def getid(self):
+        return len(self.query.all())
+
+    def add(self, mess):
+        db.session.add(mess)
+        return session_commit()
+
+    def out(self, mess):
+        return {
+            'mid': mess.mid,
+            'classID': mess.classID,
+            'stuID': mess.stuID,
+            'time': mess.time,
+            'content': mess.content,
+            'sender': mess.sender,
+            'isleave': mess.isleave
+        }
+
+class Bulletin(db.Model):
+    __tablename__ = 'bulletin'
+    bid = db.Column(db.INTEGER, primary_key=True, nullable=False)
+    classID = db.Column(db.String(20), nullable=False)
+    time = db.Column(db.String(20), nullable=False)
+    content = db.Column(db.String(200), nullable=False)
+
+    def __repr__(self):
+        return '<%r : %r bulletin >' % self.bid, self.classID
+
+    def __init__(self, bid, classID, time, content):
+        self.bid = bid
+        self.classID = classID
+        self.time = time
+        self.content = content
+
+    def getall(self, classID):
+        return self.query.filter_by(classID=classID).all()
+
+    def getid(self):
+        return len(self.query.all())
+
+    def add(self, mess):
+        db.session.add(mess)
+        return session_commit()
+
+    def out(self, mess):
+        return {
+            'bid': mess.bid,
+            'classID': mess.classID,
+            'time': mess.time,
+            'content': mess.content
         }
 
 def session_commit():
