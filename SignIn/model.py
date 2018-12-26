@@ -208,6 +208,11 @@ class Attendtable(db.Model):
         db.session.add(att)
         return session_commit()
 
+    def update(self, classID, stuID):
+        att = self.query.filter(and_(Attendtable.classID == classID, Attendtable.stuID == stuID)).last()
+        att.result = 1
+        return session_commit()
+
     def out(self, att):
         return {
             'aid': att.aid,
