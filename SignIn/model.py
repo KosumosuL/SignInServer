@@ -209,7 +209,7 @@ class Attendtable(db.Model):
         return session_commit()
 
     def update(self, classID, stuID):
-        att = self.query.filter(and_(Attendtable.classID == classID, Attendtable.stuID == stuID)).last()
+        att = self.query.filter(and_(Attendtable.classID == classID, Attendtable.stuID == stuID)).order_by(Attendtable.aid.desc()).first()
         att.result = 1
         return session_commit()
 

@@ -305,6 +305,7 @@ def init_api(app):
         return resp
 
     # teacher create class via classID & classname
+    # student join class via classID
     @app.route('/api/addclass', methods=['POST'])
     @jwt_required()
     def addclass():
@@ -810,6 +811,7 @@ def init_api(app):
                             )
                             _ = Attendtable.add(Attendtable, attendInfo)
                         CLASS_SIGNIN_STATUS[classID] = location
+                        print(CLASS_SIGNIN_STATUS[classID])
                         data['status'] = 200
                         data['message'] = 'Signin successfully started!'
 
@@ -822,9 +824,18 @@ def init_api(app):
                         data['message'] = 'class is not signining now!'
                     else:
                         tlocation = CLASS_SIGNIN_STATUS[classID]
+                        print(tlocation)
+                        tx, ty = tlocation.split()
+                        tx, ty = float(tx), float(ty)
+                        slocation = location
+                        print(slocation)
+                        sx, sy = slocation.split()
+                        sx, sy = float(sx), float(sy)
+
+
                         # trans and cal
 
-                        if True:
+                        if (tx - sx) * (tx - sx) + (ty - sy) * (ty - sy) < 1:
                             Attendtable.update(Attendtable, classID=classID, stuID=ID)
                             data['status'] = 200
                             data['message'] = 'Student successfully signined!'
