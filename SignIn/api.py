@@ -176,8 +176,9 @@ def init_api(app):
                                     trealname=realname)
                         _ = User.add(User, userInfo)
                         data['status'] = 200
-                        data['message'] = 'Student successfully registered!'
+                        data['message'] = 'Teacher successfully registered!'
                     else:
+                        data['status'] = 406
                         data['message'] = 'illegal identity'
 
         resp = jsonify(data)
@@ -239,6 +240,7 @@ def init_api(app):
                     data['status'] = 200
 
                 else:
+                    data['status'] = 406
                     data['message'] = 'illegal identity'
 
         resp = jsonify(data)
@@ -298,6 +300,7 @@ def init_api(app):
                     data['message'] = res
                     data['status'] = 200
                 else:
+                    data['status'] = 406
                     data['message'] = 'illegal identity'
 
         resp = jsonify(data)
@@ -400,6 +403,7 @@ def init_api(app):
                             data['message'] = 'Class not exist!'
 
                 else:
+                    data['status'] = 406
                     data['message'] = 'illegal identity'
 
         resp = jsonify(data)
@@ -464,6 +468,7 @@ def init_api(app):
                     data['status'] = 200
                     data['message'] = res
                 else:
+                    data['status'] = 406
                     data['message'] = 'illegal identity'
 
         resp = jsonify(data)
@@ -550,6 +555,7 @@ def init_api(app):
                     data['status'] = 200
                     data['message'] = 'teachers message successfully registered!'
                 else:
+                    data['status'] = 406
                     data['message'] = 'illegal identity'
 
         resp = jsonify(data)
@@ -608,6 +614,7 @@ def init_api(app):
                     data['status'] = 200
                     data['message'] = 'Teacher successfully broadcast!'
                 else:
+                    data['status'] = 406
                     data['message'] = 'illegal identity'
 
         resp = jsonify(data)
@@ -673,6 +680,7 @@ def init_api(app):
                     data['status'] = 200
                     data['message'] = res
                 else:
+                    data['status'] = 406
                     data['message'] = 'illegal identity'
 
         resp = jsonify(data)
@@ -728,6 +736,7 @@ def init_api(app):
                     data['status'] = 200
                     data['message'] = res
                 else:
+                    data['status'] = 406
                     data['message'] = 'illegal identity'
 
         resp = jsonify(data)
@@ -843,6 +852,7 @@ def init_api(app):
                             data['status'] = 200
                             data['message'] = 'signin fail!'
                 else:
+                    data['status'] = 406
                     data['message'] = 'illegal identity'
 
         resp = jsonify(data)
@@ -891,8 +901,10 @@ def init_api(app):
                     else:
                         del CLASS_SIGNIN_STATUS[classID]
                         data['message'] = 'Signin successfully closed!'
+                        data['status'] = 200
 
                 else:
+                    data['status'] = 406
                     data['message'] = 'illegal identity'
 
         resp = jsonify(data)
@@ -959,6 +971,7 @@ def init_api(app):
                     data['status'] = 200
                     data['message'] = res
                 else:
+                    data['status'] = 406
                     data['message'] = 'illegal identity'
 
         resp = jsonify(data)
