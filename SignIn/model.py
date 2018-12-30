@@ -13,7 +13,7 @@ class User(db.Model):
     college = db.Column(db.String(20), nullable=True)
     major = db.Column(db.String(20), nullable=True)
     # assume sex = 1 -> man | 0 -> woman
-    sex = db.Column(db.INTEGER, nullable=True)
+    sex = db.Column(db.INTEGER, nullable=False)
     # must be one of {student, teacher}
     # student  can be null
     stuID = db.Column(db.String(20), nullable=True)
